@@ -1,0 +1,52 @@
+# app.py
+from fastapi import FastAPI, Request
+import asyncio
+import random
+import psutil
+import time
+
+app = FastAPI()
+
+# Simulated request queue
+request_queue = []
+scaling_state = {"instances": 1, "last_scaled": time.time()}
+
+# Thresholds
+CPU_THRESHOLD = 70  # %
+MEMORY_THRESHOLD = 75  # %
+QUEUE_THRESHOLD = 20   # requests
+COOLDOWN_PERIOD = 30   # seconds
+MAX_INSTANCES = 10
+MIN_INSTANCES = 1
+
+def check_metrics():
+    cpu = psutil.cpu_percent(interval=1)
+    memory = psutil.virtual_memory().percent
+    queue_len = len(request_queue)
+    return cpu, memory, queue_len
+
+def auto_scale():
+    cpu, memory, queue_len = check_metrics()
+    now = time.time()
+
+    if now - scaling_state["last_scaled"] < COOLDOWN_PERIOD:
+        return scaling_state["instances"]
+
+    if cpu > CPU_THRESHOLD or memory > MEMORY_THRESHOLD or queue_len > QUEUE_THRESHOLD:
+        if scaling_state["instances"] < MAX_INSTANCES:
+            scaling_state["instances"] += 1
+            scaling_state["last_scaled"] = now
+    elif cpu < 30 and memory < 40 and queue_len < 5:
+        if scaling_state["instances"] > MIN_INSTANCES:
+            scaling_state["instances"] -= 1
+            scaling_state["last_scaled"] = now
+
+    return scaling_state["instances"]
+
+@app.get("/process")
+async def process_request(request: Request):
+    request_queue.append(request)
+    await asyncio.sleep(random.uniform(0.2, 1.0))  # simulate work
+    request_queue.pop(0)
+    instances = auto_scale()
+    return {"status": "processed", "active_instances": instances}
