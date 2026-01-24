@@ -1,3 +1,14 @@
+ELEWANYE Curtis-dorsey 2401001262
+NDAYISHIMIYE Eric: 2405001272
+MUHINDO SIVAYIRA FINNEY: 2409000488
+JIMMY KWIHANGANA :2401001573
+
+
+
+
+
+
+
 Group 13: Cloud Auto-Scaling Implementation
 
 1. Introduction and Objectives
